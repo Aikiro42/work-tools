@@ -1,0 +1,1 @@
+=IFERROR(MAP(Events[Name], LAMBDA(name, MIN(FILTER(Schedule[Date], name=Schedule[Event Name])))), 0)
