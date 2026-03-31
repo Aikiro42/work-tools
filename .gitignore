@@ -1,0 +1,11 @@
+*.pdf
+*.png
+*.svg
+*.jpg
+*.html
+
+**/__pycache__
+
+**/.vscode
+
+!pdf-tools/img-to-pdf/input/example
