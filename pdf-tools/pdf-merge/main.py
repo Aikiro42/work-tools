@@ -33,9 +33,12 @@ def rotate_pdf(path: str, angle: int = 90, output: str | None = None):
 if __name__ == "__main__":
 
   for folder, rotate, filename in [
-    # ('dtr', ['DTRAS.Alvarado.EnriqueLuis.03.04.26.pdf'])
-    ('dtr', [], "DTR.Alvarado.EnriqueLuis.03.01-15.26")
+    ('dtr2', [], 'DTRMerged.Alvarado.EnriqueLuis.04.01-30.26')
+    # ('TO.Alvarado.EnriqueLuis.04.01-30.26', [], None)
+    # ('TO.Attachment.04.28-30.26',[], "TO.Attachment.04.28-30.26")
   ]:
+    if filename is None:
+       filename = folder
     for rot in rotate:
        rotate_pdf(f"{folder}/{rot}")
     merge(folder, filename)

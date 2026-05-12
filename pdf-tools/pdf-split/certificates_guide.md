@@ -1,0 +1,7 @@
+- Generate separate Certificates
+  - Mail Merge
+- Upload certificates
+- Get individual URLs of each certificate
+- Assign each participant their respective certificate URL
+- !!! Send participants their individual certificates
+  - Each participant receives one direct link to their certificates

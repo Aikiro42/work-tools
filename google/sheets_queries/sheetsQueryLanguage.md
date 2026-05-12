@@ -127,3 +127,13 @@ Make me a solution that gives me the data I want -- give a way to do the origina
   "SELECT Col1, Col2, Col3 WHERE Col2 <= date '2025-06-30' ORDER BY Col2", 1
 )
 ```
+
+```
+=IF(
+ISNUMBER([@Year Level]),E2,IF(
+LOWER([@Year Level])="first",1,IF(
+LOWER([@Year Level])="second",2,IF(
+LOWER([@Year Level])="third",3,IF(
+LOWER([@Year Level])="fourth",4,"unknown"
+)))))
+```

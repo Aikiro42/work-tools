@@ -9,3 +9,6 @@
 **/.vscode
 
 !pdf-tools/img-to-pdf/input/example
+
+
+**/prompts
