@@ -201,13 +201,13 @@ def cmd_convert(path, flags, vars):
   # vars
   _scale = float(vars.get("scale", "1"))
   paper_size = vars.get("page", "a4")
+  img_format = vars.get("format", "jpg")
   
   # flags
   _performance = "--fast" in flags or "-f" in flags
 
   if os.path.isfile(path):  # pdf-to-img
 
-    fmt = "jpg"
     # Create output folder if it doesn't exist
     filename = os.path.basename(path)
     outpath = os.path.splitext(filename)[0]      
@@ -218,9 +218,9 @@ def cmd_convert(path, flags, vars):
     for i, page in enumerate(doc): # type: ignore
         pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 144 DPI approx
 
-        out_path = os.path.join(outpath, f"page_{i+1}.{fmt}")
+        out_path = os.path.join(outpath, f"page_{i+1}.{img_format}")
 
-        if fmt == "png":
+        if img_format == "png":
             pix.save(out_path)
         else:
             pix.save(out_path, jpg_quality=95)
@@ -385,8 +385,16 @@ def doc_convert():
       "    [--scale=<number>]\n"
       "    [--page={a4|short|folio}]\n"
       "    [--fast | -f]\n"
+      "    [--format={png|jpg|jpeg}]\n\n"
+      "Converts a PDF into a series of images, or a folder of images into a PDF."
+      "`--format` is only relevant when <path> points to a pdf."
   )
-def doc_merge(): ...
+def doc_merge():
+  print(
+      "Usage:\n"
+      "  python pdf.py merge <path>\n"
+      "    [--flat | -f]\n"
+  )
 def doc_flatten(): ...
 
 FUNCTIONS = {
