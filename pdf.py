@@ -206,7 +206,27 @@ def cmd_convert(path, flags, vars):
   _performance = "--fast" in flags or "-f" in flags
 
   if os.path.isfile(path):  # pdf-to-img
-    print("Coming soon!")
+
+    fmt = "jpg"
+    # Create output folder if it doesn't exist
+    filename = os.path.basename(path)
+    outpath = os.path.splitext(filename)[0]      
+    os.makedirs(outpath, exist_ok=True)
+
+    doc = fitz.open(path)
+
+    for i, page in enumerate(doc): # type: ignore
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 144 DPI approx
+
+        out_path = os.path.join(outpath, f"page_{i+1}.{fmt}")
+
+        if fmt == "png":
+            pix.save(out_path)
+        else:
+            pix.save(out_path, jpg_quality=95)
+
+    doc.close()
+
   elif os.path.isdir(path):  # img-to-pdf
     
     # get image paths
