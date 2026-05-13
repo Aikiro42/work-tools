@@ -1,5 +1,5 @@
-import os, sys, re
-from PyPDF2 import PdfReader, PdfWriter
+import os, sys, re, io
+from PyPDF2 import PdfReader, PdfWriter, PdfMerger
 from math import floor, sqrt
 from typing import Callable
 from PIL import Image, ImageFile
@@ -206,7 +206,7 @@ def cmd_convert(path, flags, vars):
   _performance = "--fast" in flags or "-f" in flags
 
   if os.path.isfile(path):  # pdf-to-img
-    print("pedophile to images")
+    print("Coming soon!")
   elif os.path.isdir(path):  # img-to-pdf
     
     # get image paths
@@ -245,10 +245,65 @@ def cmd_convert(path, flags, vars):
   else:
     raise Exception()
 
+"""
+def merge(folder:str, fileName:str=""):
+  # directives: []
+  merger = PdfMerger()
+
+  if fileName == "":
+    fileName = folder
+  files = sorted(listdir(f"./{folder}"))
+  for pdf in files:
+    merger.append(f"./{folder}/{pdf}")
+  
+  with open(f"./{fileName}.pdf", "wb") as output_file:
+    merger.write(output_file)
+  
+  merger.close()
+"""
+
+def helper_imgToPdf(img_path):
+    img = Image.open(img_path).convert("RGB")
+    buffer = io.BytesIO()
+    img.save(buffer, format="PDF")
+    buffer.seek(0)
+    return buffer
+
+
 def cmd_merge(path, flags, vars):
-  # vars
-  # flags
-  _flatten = "--flat" in flags or "-f" in flags
+    _flatten = "--flat" in flags or "-f" in flags
+
+    merger = PdfMerger()
+
+    file_exts = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+
+    files = sorted(
+        os.path.join(path, f)
+        for f in os.listdir(path)
+        if os.path.isfile(os.path.join(path, f))
+        and os.path.splitext(f)[1].lower() in file_exts
+    )
+
+    temp_buffers = []
+
+    for file_path in files:
+        ext = os.path.splitext(file_path)[1].lower()
+
+        if ext == ".pdf":
+            merger.append(file_path)
+        else:
+            pdf_buffer = helper_imgToPdf(file_path)
+            temp_buffers.append(pdf_buffer)
+            merger.append(pdf_buffer)
+
+    pdf_path = os.path.splitext(path)[0] + ".pdf"
+
+    with open(pdf_path, "wb") as output_file:
+        merger.write(output_file)
+
+    merger.close()
+
+
 
 # SECTION: DOCS
 
