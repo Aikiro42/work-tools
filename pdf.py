@@ -112,7 +112,6 @@ def helper_parsePages(pages: str):
       if i not in result: result.append(i)
   return result
 
-
 # scales size by s percent
 def helper_scaleSize(from_size: tuple[int, int], percent: float) -> tuple[int, int]:
     return (floor(from_size[0] * percent), floor(from_size[1] * percent))
@@ -366,7 +365,7 @@ def cmd_flatten(path, flags, vars):
 
 def doc_split():
   print(
-      "Usage:\n"
+      "Usage:\n\n"
       "  python pdf.py split <path-to-pdf>\n"
       "    [--pages=<list>]\n\n"
       "`--pages` format:\n"
@@ -380,22 +379,28 @@ def doc_split():
 
 def doc_convert():
   print(
-      "Usage:\n"
+      "Usage:\n\n"
       "  python pdf.py convert <path>\n"
       "    [--scale=<number>]\n"
       "    [--page={a4|short|folio}]\n"
       "    [--fast | -f]\n"
       "    [--format={png|jpg|jpeg}]\n\n"
-      "Converts a PDF into a series of images, or a folder of images into a PDF."
-      "`--format` is only relevant when <path> points to a pdf."
+      "Converts a PDF into a series of images, or a folder of images into a PDF, whichever is given.\n"
+      "`--format` is only relevant when <path> points to a pdf.\n"
   )
 def doc_merge():
   print(
-      "Usage:\n"
-      "  python pdf.py merge <path>\n"
-      "    [--flat | -f]\n"
+      "Usage:\n\n"
+      "  python pdf.py merge <path to folder>\n"
+      "    [--flat | -f]\n\n"
+      "Folder can contain images. File names dictate order of pages.\n"
+      "`--flat` flattens all PDFs into images to preserve digital signatures.\n"
   )
-def doc_flatten(): ...
+def doc_flatten(): 
+  print(
+      "Usage:\n\n"
+      "  python pdf.py flatten <path>\n"
+  )
 
 FUNCTIONS = {
   "split": cmd_split,
@@ -417,8 +422,9 @@ def mainHelp():
   print(f"Functions:\n")
   for f in FUNCTIONS.keys():
     print(f"  {f}")
+  print()
 
-DEBUG = True
+DEBUG = False
 
 if __name__ == "__main__":
   if DEBUG:
