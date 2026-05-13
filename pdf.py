@@ -1,10 +1,10 @@
 import os, sys, re, io
-from PyPDF2 import PdfReader, PdfWriter, PdfMerger
-from math import floor, sqrt
 from typing import Callable
+from math import floor, sqrt
+
+import fitz
+from PyPDF2 import PdfReader, PdfWriter, PdfMerger
 from PIL import Image, ImageFile
-from os import getcwd, listdir
-import sys
 
 # SECTION: DEFS
 
@@ -245,30 +245,12 @@ def cmd_convert(path, flags, vars):
   else:
     raise Exception()
 
-"""
-def merge(folder:str, fileName:str=""):
-  # directives: []
-  merger = PdfMerger()
-
-  if fileName == "":
-    fileName = folder
-  files = sorted(listdir(f"./{folder}"))
-  for pdf in files:
-    merger.append(f"./{folder}/{pdf}")
-  
-  with open(f"./{fileName}.pdf", "wb") as output_file:
-    merger.write(output_file)
-  
-  merger.close()
-"""
-
 def helper_imgToPdf(img_path):
     img = Image.open(img_path).convert("RGB")
     buffer = io.BytesIO()
     img.save(buffer, format="PDF")
     buffer.seek(0)
     return buffer
-
 
 def cmd_merge(path, flags, vars):
     _flatten = "--flat" in flags or "-f" in flags
@@ -283,26 +265,75 @@ def cmd_merge(path, flags, vars):
         if os.path.isfile(os.path.join(path, f))
         and os.path.splitext(f)[1].lower() in file_exts
     )
+    delFiles = []
 
+    if _flatten:
+      for i in range(len(files)):
+        files[i] = cmd_flatten(files[i], [], {})
+        delFiles.append(files[i])
+      
     temp_buffers = []
 
     for file_path in files:
-        ext = os.path.splitext(file_path)[1].lower()
+      ext = os.path.splitext(file_path)[1].lower()
 
-        if ext == ".pdf":
-            merger.append(file_path)
-        else:
-            pdf_buffer = helper_imgToPdf(file_path)
-            temp_buffers.append(pdf_buffer)
-            merger.append(pdf_buffer)
+      if ext == ".pdf":
+        merger.append(file_path)
+      else:
+        pdf_buffer = helper_imgToPdf(file_path)
+        temp_buffers.append(pdf_buffer)
+        merger.append(pdf_buffer)
 
     pdf_path = os.path.splitext(path)[0] + ".pdf"
 
     with open(pdf_path, "wb") as output_file:
-        merger.write(output_file)
+      merger.write(output_file)
 
     merger.close()
 
+    for f in delFiles:
+      if os.path.isfile(f):
+        os.remove(f)
+
+
+def cmd_flatten(path, flags, vars):
+
+  """
+  Flatten a PDF by rasterizing each page.
+  Saves alongside original as *_flattened.pdf
+  Returns output path.
+  """
+  input_dir = os.path.dirname(path)
+  filename = os.path.basename(path)
+  name, _ = os.path.splitext(filename)
+
+  output_path = os.path.join(input_dir, f"{name}_flattened.pdf")
+
+  src = fitz.open(path)
+  out = fitz.open()
+
+  for page in src:
+    # Rasterize page (~144 DPI)
+    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+
+    # Create blank page with same dimensions
+    new_page = out.new_page(
+      width=page.rect.width,
+      height=page.rect.height
+    )
+
+    # Insert rasterized image
+    new_page.insert_image(
+      page.rect,
+      stream=pix.tobytes("jpg", jpg_quality=100)
+    )
+
+  out.save(output_path)
+  src.close()
+  out.close()
+
+  print(f"Flattened: {output_path}")
+  return output_path
 
 
 # SECTION: DOCS
@@ -330,17 +361,20 @@ def doc_convert():
       "    [--fast | -f]\n"
   )
 def doc_merge(): ...
+def doc_flatten(): ...
 
 FUNCTIONS = {
   "split": cmd_split,
   "convert": cmd_convert,
-  "merge": cmd_merge
+  "merge": cmd_merge,
+  "flatten": cmd_flatten
 }
 
 DOCS= {
   "split": doc_split,
   "convert": doc_convert,
-  "merge": doc_merge
+  "merge": doc_merge,
+  "flatten": doc_flatten
 }
 
 def mainHelp():
@@ -351,6 +385,7 @@ def mainHelp():
     print(f"  {f}")
 
 if __name__ == "__main__":
+  """
   if len(sys.argv) < 2:
     mainHelp()
   else:
@@ -366,3 +401,14 @@ if __name__ == "__main__":
         DOCS.get(fn, mainHelp)()
     except Exception:
       mainHelp()
+  """
+  if len(sys.argv) < 2:
+    mainHelp()
+  else:
+    args, flags, vars = helper_parseCmd()
+    fn = args[0]
+    path = args[1]
+    args = args[2:]
+    # print(fn, path, args, flags, vars)
+    FUNCTIONS[fn](path, flags, vars, *args)
+      
