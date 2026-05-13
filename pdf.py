@@ -53,10 +53,21 @@ for k, v in PAGE_SIZES.items():
 def helper_parseCmd():
   argv = sys.argv[1:]  # skip script name
 
-  flags = [arg for arg in argv if arg.startswith("-")]
-  args = [arg for arg in argv if not arg.startswith("-")]
+  vars = {}
+  args = []
+  flags = []
 
-  return args, flags
+  for arg in argv:
+    if "=" in arg:
+      var, val = arg.split("=", 1)
+      var = var.removeprefix("--").removeprefix("-")
+      vars[var] = val
+    elif arg.startswith("-"):
+      flags.append(arg)
+    else:
+      args.append(arg)
+
+  return args, flags, vars
 
 # scales size to paper size ratio
 def helper_ratioSize(from_size: tuple[int, int], to_size: tuple[int, int]) -> tuple[int, int]:
@@ -88,7 +99,7 @@ def helper_renamePdf(pdfpath: str, newname: str):
 
 
 def helper_parsePages(pages: str):
-  pattern = r"(([1-9][0-9]*)-([1-9][0-9]*))|([1-9][0-9]*)"
+  pattern = r"[1-9][0-9]*(?:-[1-9][0-9]*)?"
   matches = re.findall(pattern, pages)
   result = []
   for match in matches:
@@ -130,14 +141,17 @@ def helper_getMaxDimensions(imageList: list[Image.Image] | list[ImageFile.ImageF
 
 # SECTION: Functions
 
-def split(pdf_path, flags: list, pages=""):
+def cmd_split(path, flags: list, vars):
 
-  _pages = helper_parsePages(pages)
+  # vars
+  _pages = helper_parsePages(vars.get("pages", ""))
+  
+  # flags
   _merge = "--merge" in flags or "-m" in flags
 
-
   # Load the PDF
-  reader = PdfReader(path)
+  pdf_path = os.path.splitext(path)[0] + ".pdf"
+  reader = PdfReader(pdf_path)
   num_pages = len(reader.pages)
 
   # Create output folder if it doesn't exist
@@ -147,12 +161,15 @@ def split(pdf_path, flags: list, pages=""):
   
   # Determine pages to process
   pages_to_use = _pages if len(_pages) > 0 else list(range(1, num_pages + 1))
+  split_pages = 0
 
   if _merge:
     # Merge selected pages into one PDF
     writer = PdfWriter()
     for i in pages_to_use:
-      writer.add_page(reader.pages[i-1])  # 1-based to 0-based index
+      if 1 < i < num_pages:
+        writer.add_page(reader.pages[i-1])  # 1-based to 0-based index
+        split_pages += 1
 
     outfile = os.path.join(outpath, "merged.pdf")
     with open(outfile, "wb") as f:
@@ -170,14 +187,22 @@ def split(pdf_path, flags: list, pages=""):
         outfile = os.path.join(outpath, filename)
         with open(outfile, "wb") as f:
           writer.write(f)
+        split_pages += 1
 
     npage = len(pages_to_use)
-    print(f"Split complete! Wrote {npage} page{'s' if npage > 1 else ''} to: {outpath}")
+    if split_pages > 1:
+      print(f"Split complete! Wrote {npage} page{'s' if npage > 1 else ''} to: {outpath}")
+    else:
+      print(f"Split complete but did not make any page.")
 
 
-def convert(path, flags, scale="", paper_size="a4", performance=""):
-  _scale = 1
-  if scale != "": _scale = float(scale)
+def cmd_convert(path, flags, vars):
+
+  # vars
+  _scale = float(vars.get("scale", "1"))
+  paper_size = vars.get("paper-size", "a4")
+  
+  # flags
   _performance = "--fast" in flags or "-f" in flags
 
   if os.path.isfile(path):  # pdf-to-img
@@ -205,7 +230,7 @@ def convert(path, flags, scale="", paper_size="a4", performance=""):
 
     if paper_size != "":
     # resize images to minimum/maximum dimensions depending on performance mode flag
-      min_dim = (helper_getMinDimensions if performance else helper_getMaxDimensions)(images)
+      min_dim = (helper_getMinDimensions if _performance else helper_getMaxDimensions)(images)
       scaled_dim = helper_ratioSize(min_dim, PAGE_SIZE_PX[paper_size])
       images = list(map(lambda image: image.resize(scaled_dim), images))
     
@@ -220,19 +245,19 @@ def convert(path, flags, scale="", paper_size="a4", performance=""):
   else:
     raise Exception()
 
-def merge(path, flags, flatten="", help: bool = False):
+def cmd_merge(path, flags, flatten="", help: bool = False):
   ...
 
 
 FUNCTIONS = {
-  "split": split,
-  "convert": convert,
-  "merge": merge
+  "split": cmd_split,
+  "convert": cmd_convert,
+  "merge": cmd_merge
 }
 
 func_args = {
   "split": "<pages> (--merge | -m)",
-  "convert": "<scale> "
+  "convert": "<scale>"
 }
 
 def mainHelp():
@@ -246,8 +271,9 @@ if __name__ == "__main__":
   if len(sys.argv) < 2:
     mainHelp()
   else:
-    args, flags = helper_parseCmd()
+    args, flags, vars = helper_parseCmd()
     fn = args[0]
     path = args[1]
     args = args[2:]
-    FUNCTIONS[fn](path, flags, *args)
+    # print(fn, path, args, flags, vars)
+    FUNCTIONS[fn](path, flags, vars, *args)
