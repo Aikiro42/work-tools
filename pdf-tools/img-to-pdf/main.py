@@ -16,9 +16,6 @@ import sys
 
 # DEFINITIONS
 
-# scales size by s percent
-def scale_size(from_size: tuple[int, int], percent: float) -> tuple[int, int]:
-    return (floor(from_size[0] * percent), floor(from_size[1] * percent))
 
 # scales size to paper size ratio
 def ratio_size(from_size: tuple[int, int], to_size: tuple[int, int]) -> tuple[int, int]:

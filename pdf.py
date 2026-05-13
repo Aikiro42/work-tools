@@ -1,6 +1,12 @@
 import os, sys, re
 from PyPDF2 import PdfReader, PdfWriter
+from math import floor, sqrt
+from typing import Callable
+from PIL import Image, ImageFile
+from os import getcwd, listdir
+import sys
 
+# SECTION: DEFS
 
 BOOL_ALIASES = {
   "y": True,
@@ -10,6 +16,49 @@ BOOL_ALIASES = {
   "no": False,
   "false": False,
 }
+
+INCHES = "in"
+MILLIMETERS = "mm"
+CENTIMETERS = "cm"
+
+PAGE_SIZES = {
+  "a4": (210, 297, MILLIMETERS),
+  "short": (8.5, 11, INCHES),
+  "folio": (8.5, 13, INCHES)
+}
+
+PAGE_SIZE_PX = {}
+
+def size_to_px(dim: tuple, unit:str=INCHES, dpi: int = 300) -> tuple:  
+  w, h = dim
+  
+  if unit != INCHES:  # convert to inches
+    
+    # if centimeters, convert to millimeters
+    if unit == CENTIMETERS:
+      w *= 10
+      h *= 10
+    
+    # 25.4mm in inch
+    w /= 25.4
+    h /= 25.4
+
+  return (floor(w*sqrt(dpi)), floor(h*sqrt(dpi)))
+
+for k, v in PAGE_SIZES.items():
+  PAGE_SIZE_PX[k] = size_to_px((v[0], v[1]), v[2])
+
+# SECTION: HELPERS
+
+# scales size to paper size ratio
+def helper_ratioSize(from_size: tuple[int, int], to_size: tuple[int, int]) -> tuple[int, int]:
+
+    target_ratio = to_size[0]/to_size[1]    # alpha = tgt_w / tgt_h
+    
+    scaled_height = floor(max(from_size[1], to_size[1]))
+    scaled_width = floor(target_ratio * scaled_height)
+
+    return (scaled_width, scaled_height)
 
 def helper_renamePdf(pdfpath: str, newname: str):
     # Ensure the original file exists
@@ -45,6 +94,33 @@ def helper_parsePages(pages: str):
   return result
 
 
+# scales size by s percent
+def helper_scaleSize(from_size: tuple[int, int], percent: float) -> tuple[int, int]:
+    return (floor(from_size[0] * percent), floor(from_size[1] * percent))
+
+# get best dimensions based on performance needs
+def helper_getBestDimensions(
+        imageList: list[Image.Image] | list[ImageFile.ImageFile],
+        compfunc: Callable[[Image.Image | ImageFile.ImageFile, tuple[int, int]], bool]
+    ) ->tuple[int, int]:
+    min_dim = None
+    for image in imageList:
+        if min_dim is None:
+            min_dim = image.size
+        if compfunc(image, min_dim):
+            min_dim = image.size
+    if min_dim is None:
+        return (-1, -1)
+    return min_dim
+
+def helper_getMinDimensions(imageList: list[Image.Image] | list[ImageFile.ImageFile]):
+    return helper_getBestDimensions(imageList, lambda image, best: image.size[0] <= best[0] and image.size[1] <= best[1])
+
+def helper_getMaxDimensions(imageList: list[Image.Image] | list[ImageFile.ImageFile]):
+    return helper_getBestDimensions(imageList, lambda image, best: image.size[0] >= best[0] and image.size[1] >= best[1])
+
+
+# SECTION: Functions
 
 def split(pdf_path="", pages="", merge=""):
   def help():
@@ -52,7 +128,7 @@ def split(pdf_path="", pages="", merge=""):
   
   try:
     _pages = helper_parsePages(pages)
-    _merge = BOOL_ALIASES.get(merge.lower(), merge == "--merge" or merge == "-m")
+    _merge = BOOL_ALIASES.get(merge.lower(), merge in ("--merge", "-m"))
 
 
     # Load the PDF
@@ -68,42 +144,83 @@ def split(pdf_path="", pages="", merge=""):
     pages_to_use = _pages if len(_pages) > 0 else list(range(1, num_pages + 1))
 
     if _merge:
-        # Merge selected pages into one PDF
-        writer = PdfWriter()
-        for i in pages_to_use:
-            writer.add_page(reader.pages[i-1])  # 1-based to 0-based index
+      # Merge selected pages into one PDF
+      writer = PdfWriter()
+      for i in pages_to_use:
+        writer.add_page(reader.pages[i-1])  # 1-based to 0-based index
 
-        outfile = os.path.join(outpath, "merged.pdf")
-        with open(outfile, "wb") as f:
+      outfile = os.path.join(outpath, "merged.pdf")
+      with open(outfile, "wb") as f:
+        writer.write(f)
+
+      print(f"Merged {len(pages_to_use)} page{'s' if len(pages_to_use) > 1 else ''} into: {outfile}")
+    else:
+      # Split each page into its own PDF
+      for i in range(num_pages):
+        if (i+1) in pages_to_use:
+          writer = PdfWriter()
+          writer.add_page(reader.pages[i])
+
+          filename = f"{i+1:03d}.pdf"
+          outfile = os.path.join(outpath, filename)
+          with open(outfile, "wb") as f:
             writer.write(f)
 
-        print(f"Merged {len(pages_to_use)} page{'s' if len(pages_to_use) > 1 else ''} into: {outfile}")
-    else:
-        # Split each page into its own PDF
-        for i in range(num_pages):
-            if (i+1) in pages_to_use:
-                writer = PdfWriter()
-                writer.add_page(reader.pages[i])
-
-                filename = f"{i+1:03d}.pdf"
-                outfile = os.path.join(outpath, filename)
-                with open(outfile, "wb") as f:
-                    writer.write(f)
-
-        npage = len(pages_to_use)
-        print(f"Split complete! Wrote {npage} page{'s' if npage > 1 else ''} to: {outpath}")
-
-
+      npage = len(pages_to_use)
+      print(f"Split complete! Wrote {npage} page{'s' if npage > 1 else ''} to: {outpath}")
 
   except Exception:
     help()
 
-def convert(path="", scale="", paper_size="a4"):
+
+def convert(path="", scale="", paper_size="a4", performance=""):
   def help():
     return
   
   try:
     _scale = float(scale)
+    _performance = BOOL_ALIASES.get(performance, performance in ("--fast", "-f"))
+
+    if os.path.isfile(path):  # pdf-to-img
+      print("pedophile to images")
+    elif os.path.isdir(path):  # img-to-pdf
+      
+      # get image paths
+      image_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+      imagePaths= sorted([
+        os.path.join(path, filename)
+        for filename in os.listdir(path)
+        if os.path.isfile(os.path.join(path, filename))
+        and os.path.splitext(filename)[1].lower() in image_exts
+      ])
+
+      # load images from folder using the gathered filenames
+      images = []
+      for imagePath in imagePaths:
+        images.append(Image.open(imagePath))
+
+      if _scale != 1:
+        min_dim = (helper_getMinDimensions if _performance else helper_getMaxDimensions)(images)
+        scaled_dim = helper_scaleSize(min_dim, _scale)
+        images = list(map(lambda image: image.resize(scaled_dim), images))
+
+      if paper_size != "":
+      # resize images to minimum/maximum dimensions depending on performance mode flag
+        min_dim = (helper_getMinDimensions if performance else helper_getMaxDimensions)(images)
+        scaled_dim = helper_ratioSize(min_dim, PAGE_SIZE_PX[paper_size])
+        images = list(map(lambda image: image.resize(scaled_dim), images))
+      
+      # save to /<folder_name>/<folder_name>.pdf
+      
+      pdf_path = os.path.splitext(path)[0] + ".pdf"
+      
+      images[0].save(
+          pdf_path, "PDF" ,resolution=100.0, save_all=True, append_images=images[1:]
+      )
+
+    else:
+      raise Exception()
+
   except Exception:
     help()
 
