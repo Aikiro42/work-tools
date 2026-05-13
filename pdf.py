@@ -141,7 +141,7 @@ def helper_getMaxDimensions(imageList: list[Image.Image] | list[ImageFile.ImageF
 
 # SECTION: Functions
 
-def cmd_split(path, flags: list, vars):
+def cmd_split(path, flags, vars):
 
   # vars
   _pages = helper_parsePages(vars.get("pages", ""))
@@ -200,7 +200,7 @@ def cmd_convert(path, flags, vars):
 
   # vars
   _scale = float(vars.get("scale", "1"))
-  paper_size = vars.get("paper-size", "a4")
+  paper_size = vars.get("page", "a4")
   
   # flags
   _performance = "--fast" in flags or "-f" in flags
@@ -245,9 +245,36 @@ def cmd_convert(path, flags, vars):
   else:
     raise Exception()
 
-def cmd_merge(path, flags, flatten="", help: bool = False):
-  ...
+def cmd_merge(path, flags, vars):
+  # vars
+  # flags
+  _flatten = "--flat" in flags or "-f" in flags
 
+# SECTION: DOCS
+
+def doc_split():
+  print(
+      "Usage:\n"
+      "  python pdf.py split <path-to-pdf>\n"
+      "    [--pages=<list>]\n\n"
+      "`--pages` format:\n"
+      "  Comma-separated page numbers and ranges\n"
+      "  Examples:\n"
+      "    --pages=1,3,5-10,12\n"
+      "    --pages=2-3\n"
+      "    --pages=3-7,8-12\n"
+      "    --pages=6\n"
+  )
+
+def doc_convert():
+  print(
+      "Usage:\n"
+      "  python pdf.py convert <path>\n"
+      "    [--scale=<number>]\n"
+      "    [--page={a4|short|folio}]\n"
+      "    [--fast | -f]\n"
+  )
+def doc_merge(): ...
 
 FUNCTIONS = {
   "split": cmd_split,
@@ -255,15 +282,16 @@ FUNCTIONS = {
   "merge": cmd_merge
 }
 
-func_args = {
-  "split": "<pages> (--merge | -m)",
-  "convert": "<scale>"
+DOCS= {
+  "split": doc_split,
+  "convert": doc_convert,
+  "merge": doc_merge
 }
 
 def mainHelp():
-  print(f"Usage:")
-  print(f"  python pdf.py <function> <pdf/folder path> <function args>")
-  print(f"Functions:")
+  print(f"Usage:\n")
+  print(f"  python pdf.py <function> <pdf/folder path> <function args>\n")
+  print(f"Functions:\n")
   for f in FUNCTIONS.keys():
     print(f"  {f}")
 
@@ -271,9 +299,15 @@ if __name__ == "__main__":
   if len(sys.argv) < 2:
     mainHelp()
   else:
-    args, flags, vars = helper_parseCmd()
-    fn = args[0]
-    path = args[1]
-    args = args[2:]
-    # print(fn, path, args, flags, vars)
-    FUNCTIONS[fn](path, flags, vars, *args)
+    try:
+      args, flags, vars = helper_parseCmd()
+      fn = args[0]
+      try:
+        path = args[1]
+        args = args[2:]
+        # print(fn, path, args, flags, vars)
+        FUNCTIONS[fn](path, flags, vars, *args)
+      except Exception:
+        DOCS.get(fn, mainHelp)()
+    except Exception:
+      mainHelp()
