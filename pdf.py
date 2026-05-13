@@ -418,31 +418,29 @@ def mainHelp():
   for f in FUNCTIONS.keys():
     print(f"  {f}")
 
+DEBUG = True
+
 if __name__ == "__main__":
-  """
-  if len(sys.argv) < 2:
-    mainHelp()
-  else:
-    try:
-      args, flags, vars = helper_parseCmd()
-      fn = args[0]
-      try:
-        path = args[1]
-        args = args[2:]
-        # print(fn, path, args, flags, vars)
-        FUNCTIONS[fn](path, flags, vars, *args)
-      except Exception:
-        DOCS.get(fn, mainHelp)()
-    except Exception:
-      mainHelp()
-  """
-  if len(sys.argv) < 2:
-    mainHelp()
-  else:
+  if DEBUG:
     args, flags, vars = helper_parseCmd()
     fn = args[0]
     path = args[1]
     args = args[2:]
     # print(fn, path, args, flags, vars)
     FUNCTIONS[fn](path, flags, vars, *args)
-      
+  else:
+    if len(sys.argv) < 2:
+      mainHelp()
+    else:
+      try:
+        args, flags, vars = helper_parseCmd()
+        fn = args[0]
+        try:
+          path = args[1]
+          args = args[2:]
+          # print(fn, path, args, flags, vars)
+          FUNCTIONS[fn](path, flags, vars, *args)
+        except Exception:
+          DOCS.get(fn, mainHelp)()
+      except Exception:
+        mainHelp()
