@@ -305,7 +305,13 @@ def cmd_flatten(path, flags, vars):
   """
   input_dir = os.path.dirname(path)
   filename = os.path.basename(path)
-  name, _ = os.path.splitext(filename)
+
+  name, ext = os.path.splitext(filename)
+
+  # assume .pdf if no extension provided
+  if ext == "":
+    ext = ".pdf"
+    path = os.path.join(input_dir, filename + ext)
 
   output_path = os.path.join(input_dir, f"{name}_flattened.pdf")
 
