@@ -308,7 +308,6 @@ def helper_imgToPdf(img_path):
 
 def cmd_merge(path, flags, vars):
     # vars
-    _rotateList = helper_parsePages(vars.get("rotate", ""))
 
     # flags
     _flatten = "--flat" in flags or "-f" in flags
