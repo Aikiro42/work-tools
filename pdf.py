@@ -149,9 +149,18 @@ def cmd_split(path, flags, vars):
   
   # flags
   _merge = "--merge" in flags or "-m" in flags
+  _flatten = "--flat" in flags or "-f" in flags
 
   # Load the PDF
   pdf_path = os.path.splitext(path)[0] + ".pdf"
+
+  delFiles = []
+
+  # Flatten pdf
+  if _flatten:
+    pdf_path = cmd_flatten(pdf_path, [], {})
+    delFiles.append(pdf_path)
+
   reader = PdfReader(pdf_path)
   num_pages = len(reader.pages)
 
@@ -195,6 +204,10 @@ def cmd_split(path, flags, vars):
       print(f"Split complete! Wrote {npage} page{'s' if npage > 1 else ''} to: {outpath}")
     else:
       print(f"Split complete but did not make any page.")
+
+    for f in delFiles:
+      if os.path.isfile(f):
+        os.remove(f)
 
 
 def cmd_convert(path, flags, vars):
@@ -372,6 +385,7 @@ def doc_split():
       "    [--pages=<list>]\n"
       "    [--rename=<path-to-text>]\n"
       "    [--merge | -m]\n"
+      "    [--flat | -f]\n"
       "\n"
       "`--pages` format:\n"
       "  Comma-separated page numbers and ranges\n"
@@ -400,7 +414,8 @@ def doc_merge():
   print(
       "Usage:\n\n"
       "  python pdf.py merge <path to folder>\n"
-      "    [--flat | -f]\n\n"
+      "    [--flat | -f]\n"
+      "\n"
       "Folder can contain images. File names dictate order of pages.\n"
       "`--flat` flattens all PDFs into images to preserve digital signatures.\n"
   )
