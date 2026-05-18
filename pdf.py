@@ -110,6 +110,7 @@ def helper_parsePages(pages: str):
     else:
       i = int(match)
       if i not in result: result.append(i)
+  print(result)
   return result
 
 # scales size by s percent
@@ -144,6 +145,7 @@ def cmd_split(path, flags, vars):
 
   # vars
   _pages = helper_parsePages(vars.get("pages", ""))
+  _renameList = helper_parsePages(vars.get("rename", ""))
   
   # flags
   _merge = "--merge" in flags or "-m" in flags
@@ -166,7 +168,7 @@ def cmd_split(path, flags, vars):
     # Merge selected pages into one PDF
     writer = PdfWriter()
     for i in pages_to_use:
-      if 1 < i < num_pages:
+      if 1 <= i <= num_pages:
         writer.add_page(reader.pages[i-1])  # 1-based to 0-based index
         split_pages += 1
 
@@ -367,7 +369,10 @@ def doc_split():
   print(
       "Usage:\n\n"
       "  python pdf.py split <path-to-pdf>\n"
-      "    [--pages=<list>]\n\n"
+      "    [--pages=<list>]\n"
+      "    [--rename=<path-to-text>]\n"
+      "    [--merge | -m]\n"
+      "\n"
       "`--pages` format:\n"
       "  Comma-separated page numbers and ranges\n"
       "  Examples:\n"
@@ -375,6 +380,9 @@ def doc_split():
       "    --pages=2-3\n"
       "    --pages=3-7,8-12\n"
       "    --pages=6\n"
+      "\n"
+      "(WIP) `--rename` must be given to a text file containing a\n"
+      "list of newline-separated names for each page of the pdf.\n"
   )
 
 def doc_convert():
@@ -409,7 +417,7 @@ FUNCTIONS = {
   "flatten": cmd_flatten
 }
 
-DOCS= {
+DOCS = {
   "split": doc_split,
   "convert": doc_convert,
   "merge": doc_merge,
