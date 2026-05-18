@@ -110,7 +110,7 @@ def helper_parsePages(pages: str):
     else:
       i = int(match)
       if i not in result: result.append(i)
-  print(result)
+  # print(result)
   return result
 
 # scales size by s percent
@@ -140,6 +140,25 @@ def helper_getMaxDimensions(imageList: list[Image.Image] | list[ImageFile.ImageF
 
 
 # SECTION: Functions
+
+def cmd_rotate(path, flags, vars):
+    _angle = int(vars.get("angle", "90"))
+    
+    pdf_path = os.path.splitext(path)[0] + ".pdf"
+    out_path = os.path.splitext(path)[0] + "_rotated.pdf"
+
+    reader = PdfReader(pdf_path)
+    writer = PdfWriter()
+
+    for page in reader.pages:
+      page.rotate(_angle)  # positive = clockwise
+      writer.add_page(page)
+
+    with open(out_path, "wb") as f:
+      writer.write(f)
+    
+    return out_path
+
 
 def cmd_split(path, flags, vars):
 
@@ -249,6 +268,7 @@ def cmd_convert(path, flags, vars):
       os.path.join(path, filename)
       for filename in os.listdir(path)
       if os.path.isfile(os.path.join(path, filename))
+      and not filename.startswith(".")
       and os.path.splitext(filename)[1].lower() in image_exts
     ])
 
@@ -287,6 +307,10 @@ def helper_imgToPdf(img_path):
     return buffer
 
 def cmd_merge(path, flags, vars):
+    # vars
+    _rotateList = helper_parsePages(vars.get("rotate", ""))
+
+    # flags
     _flatten = "--flat" in flags or "-f" in flags
 
     merger = PdfMerger()
@@ -294,11 +318,12 @@ def cmd_merge(path, flags, vars):
     file_exts = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
 
     files = sorted(
-        os.path.join(path, f)
-        for f in os.listdir(path)
-        if os.path.isfile(os.path.join(path, f))
-        and os.path.splitext(f)[1].lower() in file_exts
-    )
+      os.path.join(path, f)
+      for f in os.listdir(path)
+      if os.path.isfile(os.path.join(path, f))
+      and not f.startswith(".")
+      and os.path.splitext(f)[1].lower() in file_exts
+    )   
     delFiles = []
 
     if _flatten:
@@ -377,6 +402,17 @@ def cmd_flatten(path, flags, vars):
 
 
 # SECTION: DOCS
+def doc_rotate():
+  print(
+      "Usage:\n\n"
+      "  python pdf.py rotate <path-to-pdf>\n"
+      "    [--angle=<int>]\n"
+      "\n"
+      "`--angle` is an integer corresponding to the\n"
+      "number of degrees the document is rotated clockwise.\n"
+      "If a negative integer is provided, rotates document\n"
+      "counter-clockwise.\n"
+  )
 
 def doc_split():
   print(
@@ -386,6 +422,9 @@ def doc_split():
       "    [--rename=<path-to-text>]\n"
       "    [--merge | -m]\n"
       "    [--flat | -f]\n"
+      "\n"
+      "Splits all (or specific) pages from a PDF into individual PDFs.\n"
+      "If run with `--merge` or `-m`, merges all split pages.\n"
       "\n"
       "`--pages` format:\n"
       "  Comma-separated page numbers and ranges\n"
@@ -407,7 +446,9 @@ def doc_convert():
       "    [--page={a4|short|folio}]\n"
       "    [--fast | -f]\n"
       "    [--format={png|jpg|jpeg}]\n\n"
-      "Converts a PDF into a series of images, or a folder of images into a PDF, whichever is given.\n"
+      "Converts a PDF into a series of images, or a folder of images\n"
+      "into a PDF, whichever is given.\n"
+      "Excludes files with names starting with '.' (i.e. hidden files)\n"
       "`--format` is only relevant when <path> points to a pdf.\n"
   )
 def doc_merge():
@@ -416,7 +457,9 @@ def doc_merge():
       "  python pdf.py merge <path to folder>\n"
       "    [--flat | -f]\n"
       "\n"
-      "Folder can contain images. File names dictate order of pages.\n"
+      "Merges all images and PDFs in a folder into a single PDF. File\n"
+      "names dictate order of pages.\n"
+      "Excludes files with names starting with '.' (i.e. hidden files)\n"
       "`--flat` flattens all PDFs into images to preserve digital signatures.\n"
   )
 def doc_flatten(): 
@@ -426,6 +469,7 @@ def doc_flatten():
   )
 
 FUNCTIONS = {
+  "rotate": cmd_rotate,
   "split": cmd_split,
   "convert": cmd_convert,
   "merge": cmd_merge,
@@ -433,6 +477,7 @@ FUNCTIONS = {
 }
 
 DOCS = {
+  "rotate": doc_rotate,
   "split": doc_split,
   "convert": doc_convert,
   "merge": doc_merge,
