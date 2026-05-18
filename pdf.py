@@ -164,8 +164,12 @@ def cmd_split(path, flags, vars):
 
   # vars
   _pages = helper_parsePages(vars.get("pages", ""))
-  _renameList = helper_parsePages(vars.get("rename", ""))
-  
+  _renameFile = vars.get("rename", "").strip()
+
+  # config
+  MAX_FILENAME_LENGTH = 200
+  INVALID_FILENAME_CHARS = '<>:"/\\|?*'
+
   # flags
   _merge = "--merge" in flags or "-m" in flags
   _flatten = "--flat" in flags or "-f" in flags
@@ -185,9 +189,9 @@ def cmd_split(path, flags, vars):
 
   # Create output folder if it doesn't exist
   filename = os.path.basename(path)
-  outpath = os.path.splitext(filename)[0]  
+  outpath = os.path.splitext(filename)[0]
   os.makedirs(outpath, exist_ok=True)
-  
+
   # Determine pages to process
   pages_to_use = _pages if len(_pages) > 0 else list(range(1, num_pages + 1))
   split_pages = 0
@@ -197,7 +201,7 @@ def cmd_split(path, flags, vars):
     writer = PdfWriter()
     for i in pages_to_use:
       if 1 <= i <= num_pages:
-        writer.add_page(reader.pages[i-1])  # 1-based to 0-based index
+        writer.add_page(reader.pages[i-1])
         split_pages += 1
 
     outfile = os.path.join(outpath, "merged.pdf")
@@ -205,8 +209,11 @@ def cmd_split(path, flags, vars):
       writer.write(f)
 
     print(f"Merged {len(pages_to_use)} page{'s' if len(pages_to_use) > 1 else ''} into: {outfile}")
+
   else:
     # Split each page into its own PDF
+    created_files = []
+
     for i in range(num_pages):
       if (i+1) in pages_to_use:
         writer = PdfWriter()
@@ -214,16 +221,76 @@ def cmd_split(path, flags, vars):
 
         filename = f"{i+1:03d}.pdf"
         outfile = os.path.join(outpath, filename)
+
         with open(outfile, "wb") as f:
           writer.write(f)
+
+        created_files.append(outfile)
         split_pages += 1
 
-    npage = len(pages_to_use)
-    if split_pages > 1:
+    npage = len(created_files)
+
+    if split_pages > 0:
       print(f"Split complete! Wrote {npage} page{'s' if npage > 1 else ''} to: {outpath}")
     else:
-      print(f"Split complete but did not make any page.")
+      print("Split complete but did not make any page.")
 
+    # ============================
+    # Rename files from text file
+    # ============================
+    if _renameFile:
+
+      if not os.path.isfile(_renameFile):
+        print(f"Rename skipped: file not found: {_renameFile}")
+
+      else:
+        with open(_renameFile, "r", encoding="utf-8") as f:
+          raw_names = [line.strip() for line in f.readlines()]
+
+        # Remove blank lines
+        names = [n for n in raw_names if n]
+
+        # Empty file -> do nothing
+        if not names:
+          print("Rename skipped: rename file is empty.")
+
+        else:
+          # Validate ALL names first
+          invalid_reason = None
+
+          for line_num, name in enumerate(names, start=1):
+
+            if len(name) > MAX_FILENAME_LENGTH:
+              invalid_reason = (
+                f"Rename failed: line {line_num} exceeds "
+                f"{MAX_FILENAME_LENGTH} characters."
+              )
+              break
+
+            if any(c in INVALID_FILENAME_CHARS for c in name):
+              invalid_reason = (
+                f"Rename failed: line {line_num} contains "
+                f"invalid filename characters."
+              )
+              break
+
+          if invalid_reason:
+            print(invalid_reason)
+
+          else:
+            # Rename only up to min(pdf count, name count)
+            rename_count = min(len(created_files), len(names))
+
+            for i in range(rename_count):
+              old_path = created_files[i]
+              new_name = names[i] + ".pdf"
+              new_path = os.path.join(outpath, new_name)
+
+              os.rename(old_path, new_path)
+
+            print(f"Renamed {rename_count} PDF{'s' if rename_count != 1 else ''}.")
+
+    # Delete temporary flattened file
     for f in delFiles:
       if os.path.isfile(f):
         os.remove(f)
