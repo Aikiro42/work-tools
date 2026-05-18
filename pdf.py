@@ -255,40 +255,55 @@ def cmd_split(path, flags, vars):
           print("Rename skipped: rename file is empty.")
 
         else:
-          # Validate ALL names first
-          invalid_reason = None
+          # Rename only up to min(pdf count, name count)
+          rename_count = min(len(created_files), len(names))
+          renamed = 0
+          skipped = 0
 
-          for line_num, name in enumerate(names, start=1):
+          for i in range(rename_count):
+            old_path = created_files[i]
+            name = names[i]
 
+            # Skip empty names
+            if len(name) <= 0:
+              print(
+                f"Skipped line {i+1}: empty name "
+              )
+              skipped += 1
+              continue
+
+            # Skip overly long names
             if len(name) > MAX_FILENAME_LENGTH:
-              invalid_reason = (
-                f"Rename failed: line {line_num} exceeds "
+              print(
+                f"Skipped line {i+1}: exceeds "
                 f"{MAX_FILENAME_LENGTH} characters."
               )
-              break
+              skipped += 1
+              continue
 
+            # Skip invalid characters
             if any(c in INVALID_FILENAME_CHARS for c in name):
-              invalid_reason = (
-                f"Rename failed: line {line_num} contains "
+              print(
+                f"Skipped line {i+1}: contains "
                 f"invalid filename characters."
               )
-              break
+              skipped += 1
+              continue
 
-          if invalid_reason:
-            print(invalid_reason)
+            new_name = name + ".pdf"
+            new_path = os.path.join(outpath, new_name)
 
-          else:
-            # Rename only up to min(pdf count, name count)
-            rename_count = min(len(created_files), len(names))
-
-            for i in range(rename_count):
-              old_path = created_files[i]
-              new_name = names[i] + ".pdf"
-              new_path = os.path.join(outpath, new_name)
-
+            try:
               os.rename(old_path, new_path)
+              renamed += 1
+            except Exception as e:
+              print(f"Skipped line {i+1}: rename failed ({e})")
+              skipped += 1
 
-            print(f"Renamed {rename_count} PDF{'s' if rename_count != 1 else ''}.")
+          print(
+            f"Rename complete: "
+            f"{renamed} renamed, {skipped} skipped."
+          )
 
     # Delete temporary flattened file
     for f in delFiles:
@@ -500,7 +515,7 @@ def doc_split():
       "    --pages=3-7,8-12\n"
       "    --pages=6\n"
       "\n"
-      "(WIP) `--rename` must be given to a text file containing a\n"
+      "`--rename` must be given to a .txt file containing a\n"
       "list of newline-separated names for each page of the pdf.\n"
   )
 
