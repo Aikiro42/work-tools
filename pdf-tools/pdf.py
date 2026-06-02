@@ -50,7 +50,7 @@ for k, v in PAGE_SIZES.items():
 
 # SECTION: HELPERS
 
-def helper_parseCmd():
+def core_parseCmd():
   argv = sys.argv[1:]  # skip script name
 
   vars = {}
@@ -573,11 +573,11 @@ def mainHelp():
     print(f"  {f}")
   print()
 
-DEBUG = False
+DEBUG = True
 
 if __name__ == "__main__":
   if DEBUG:
-    args, flags, vars = helper_parseCmd()
+    args, flags, vars = core_parseCmd()
     fn = args[0]
     path = args[1]
     args = args[2:]
@@ -588,7 +588,7 @@ if __name__ == "__main__":
       mainHelp()
     else:
       try:
-        args, flags, vars = helper_parseCmd()
+        args, flags, vars = core_parseCmd()
         fn = args[0]
         try:
           path = args[1]
