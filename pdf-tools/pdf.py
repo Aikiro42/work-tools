@@ -364,7 +364,7 @@ def cmd_convert(path, flags, vars):
       scaled_dim = helper_scaleSize(min_dim, _scale)
       images = list(map(lambda image: image.resize(scaled_dim), images))
 
-    if paper_size != "":
+    if paper_size not in ("", "orig"):
     # resize images to minimum/maximum dimensions depending on performance mode flag
       min_dim = (helper_getMinDimensions if _performance else helper_getMaxDimensions)(images)
       scaled_dim = helper_ratioSize(min_dim, PAGE_SIZE_PX[paper_size])
@@ -573,7 +573,7 @@ def mainHelp():
     print(f"  {f}")
   print()
 
-DEBUG = True
+DEBUG = False
 
 if __name__ == "__main__":
   if DEBUG:

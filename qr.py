@@ -17,15 +17,15 @@ qr = qrcode.QRCode(
   version=2,  # automatic size
   error_correction=qrcode.constants.ERROR_CORRECT_L,
   box_size=4,
-  border=0,
+  border=4,
 )
 
 qr.add_data(link)
 qr.make(fit=True)
 
 img = qr.make_image(
-  back_color="transparent"  # ← transparent background
-).convert("RGBA")
+  back_color="white"  # ← transparent background
+).convert("RGB")
 
 img.save(f"{name}.png")
 print(f"File saved to {name}.png")
