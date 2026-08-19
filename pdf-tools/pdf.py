@@ -388,11 +388,12 @@ def helper_imgToPdf(img_path):
     buffer.seek(0)
     return buffer
 
+# TODO: add function that allows user to
+# flatten specific pages of the _merged_ document
 def cmd_merge(path, flags, vars):
-    # vars
 
     # flags
-    _flatten = "--flat" in flags or "-f" in flags
+    _flatten = "--flatten" in flags or "-f" in flags
 
     merger = PdfMerger()
 
@@ -443,6 +444,7 @@ def cmd_flatten(path, flags, vars):
   Saves alongside original as *_flattened.pdf
   Returns output path.
   """
+
   input_dir = os.path.dirname(path)
   filename = os.path.basename(path)
 
@@ -536,12 +538,21 @@ def doc_merge():
   print(
       "Usage:\n\n"
       "  python pdf.py merge <path to folder>\n"
-      "    [--flat | -f]\n"
+      "    [--flatten | -f][={pages}]\n"
       "\n"
       "Merges all images and PDFs in a folder into a single PDF. File\n"
       "names dictate order of pages.\n"
       "Excludes files with names starting with '.' (i.e. hidden files)\n"
       "`--flat` flattens all PDFs into images to preserve digital signatures.\n"
+      "\n"
+      "`--flatten` format:\n"
+      "  Comma-separated page numbers and ranges\n"
+      "  Examples:\n"
+      "    --pages=1,3,5-10,12\n"
+      "    --pages=2-3\n"
+      "    --pages=3-7,8-12\n"
+      "    --pages=6\n"
+      "\n"
   )
 def doc_flatten(): 
   print(
