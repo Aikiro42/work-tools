@@ -543,16 +543,7 @@ def doc_merge():
       "Merges all images and PDFs in a folder into a single PDF. File\n"
       "names dictate order of pages.\n"
       "Excludes files with names starting with '.' (i.e. hidden files)\n"
-      "`--flat` flattens all PDFs into images to preserve digital signatures.\n"
-      "\n"
-      "`--flatten` format:\n"
-      "  Comma-separated page numbers and ranges\n"
-      "  Examples:\n"
-      "    --pages=1,3,5-10,12\n"
-      "    --pages=2-3\n"
-      "    --pages=3-7,8-12\n"
-      "    --pages=6\n"
-      "\n"
+      "`--flatten` flattens all PDFs into images to preserve digital signatures.\n"
   )
 def doc_flatten(): 
   print(
