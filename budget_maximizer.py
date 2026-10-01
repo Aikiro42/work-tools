@@ -113,18 +113,39 @@ plurals = {
   "box": "boxes"
 }
 
+# target_budget = 29125
 target_budget = 29125
 items_to_procure = {
-  "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": (400, "ream"),
-  "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": (2500, "box"),
-  "Copy Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (300, "ream"),
-  "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (350, "ream"),
-  "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": (1200, "bottle"),
-  "Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) )": (1225, "bottle"),
+  # "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": (400, "ream"),  # 3 reams
+  # "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": (2500, "box"),  # 3 boxes
+  # "Copy Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (300, "ream"),  # 5 reams
+  # "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (350, "ream"),  # 6 reams
+  # "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": (1200, "set"),
+  # "Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) )": (1225, "set"),
   "Sign Pen (Fine Tip, Black)": (25, "pen"),
-  "Folder (Folio Size (9\" x 14\"), with tab, 25 folders per bundle)": (125, "folder"),
+  "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),
   "Markers (Black, Permanent)": (16, "marker"),
+  # "Clip (50mm, Backfold, 12 pieces per box)": (63, "box"),
+  # "Paper Clip (50mm, Vinyl/Plastic Coated, Jumbo, 100 pieces per box)": (17, "box"),
 }
+
+print("- Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream): 400.00 X 3 reams = 1,200.00")
+target_budget -= 1200
+
+print("- Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box): 2,500.00 X 3 boxes = 7,500.00")
+target_budget -= 7500
+
+print("- Bond Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 300.00 X 5 reams = 1,500.00")
+target_budget -= 1500
+
+print("- Bond Paper (Legal Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 350.00 X 6 reams = 2,100.00")
+target_budget -= 2100
+
+print("- Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill): 1,200.00 x 5 set = 6,000.00")
+target_budget -= 6000
+
+print("- Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) ): 1,225.00 x 5 set = 6,125.00")
+target_budget -= 6125
 
 i = 0
 best_result = None
