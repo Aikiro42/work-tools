@@ -2,6 +2,8 @@ import math
 import heapq
 
 COPYPASTA = True
+MAXIMIZE = True
+MIN_COUNT = 1
 
 def frobenius(numbers: list[int]) -> int | float:
     """
@@ -113,39 +115,54 @@ plurals = {
   "box": "boxes"
 }
 
-# target_budget = 29125
-target_budget = 29125
-items_to_procure = {
-  # "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": (400, "ream"),  # 3 reams
-  # "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": (2500, "box"),  # 3 boxes
-  # "Copy Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (300, "ream"),  # 5 reams
-  # "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (350, "ream"),  # 6 reams
-  # "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": (1200, "set"),
-  # "Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) )": (1225, "set"),
-  "Sign Pen (Fine Tip, Black)": (25, "pen"),
-  "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),
-  "Markers (Black, Permanent)": (16, "marker"),
-  # "Clip (50mm, Backfold, 12 pieces per box)": (63, "box"),
-  # "Paper Clip (50mm, Vinyl/Plastic Coated, Jumbo, 100 pieces per box)": (17, "box"),
-}
+target_budget = 0
+items_to_procure = {}
 
-print("- Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream): 400.00 X 3 reams = 1,200.00")
-target_budget -= 1200
+def pap_5020301001():
+    global target_budget, items_to_procure
+    target_budget = 29125
+    items_to_procure = {
+    # "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": (400, "ream"),  # 3 reams
+    # "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": (2500, "box"),  # 3 boxes
+    # "Copy Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (300, "ream"),  # 5 reams
+    # "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (350, "ream"),  # 6 reams
+    # "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": (1200, "set"),
+    # "Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) )": (1225, "set"),
+    "Sign Pen (Fine Tip, Black)": (25, "pen"),
+    "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),
+    "Markers (Black, Permanent)": (16, "marker"),
+    # "Clip (50mm, Backfold, 12 pieces per box)": (63, "box"),
+    # "Paper Clip (50mm, Vinyl/Plastic Coated, Jumbo, 100 pieces per box)": (17, "box"),
+    }
 
-print("- Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box): 2,500.00 X 3 boxes = 7,500.00")
-target_budget -= 7500
+    print("- Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream): 400.00 X 3 reams = 1,200.00")
+    target_budget -= 1200
 
-print("- Bond Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 300.00 X 5 reams = 1,500.00")
-target_budget -= 1500
+    print("- Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box): 2,500.00 X 3 boxes = 7,500.00")
+    target_budget -= 7500
 
-print("- Bond Paper (Legal Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 350.00 X 6 reams = 2,100.00")
-target_budget -= 2100
+    print("- Bond Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 300.00 X 5 reams = 1,500.00")
+    target_budget -= 1500
 
-print("- Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill): 1,200.00 x 5 set = 6,000.00")
-target_budget -= 6000
+    print("- Bond Paper (Legal Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 350.00 X 6 reams = 2,100.00")
+    target_budget -= 2100
 
-print("- Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) ): 1,225.00 x 5 set = 6,125.00")
-target_budget -= 6125
+    print("- Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill): 1,200.00 x 5 set = 6,000.00")
+    target_budget -= 6000
+
+    print("- Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) ): 1,225.00 x 5 set = 6,125.00")
+    target_budget -= 6125
+
+
+def obj_5021199000():
+    global target_budget, items_to_procure
+    target_budget = 6200
+    items_to_procure = {
+    "Presentation Clicker (Wireless, with Laser)": (400, "clicker"),
+    "HDMI (Wireless)": (2750, "set"),
+    }
+
+obj_5021199000()
 
 i = 0
 best_result = None
@@ -153,25 +170,33 @@ best_gini_coeff = 1
 
 to_procure = {k: v[0] for k, v in items_to_procure.items()}
 
-while True:
-  bdgt = target_budget - sum([x * i for x in to_procure.values()])
-  if bdgt <= 0: break
+if MAXIMIZE:
+    bdgt = target_budget - sum([x * MIN_COUNT for x in to_procure.values()])
+    if bdgt > 0:
+        best_result = procure(to_procure, bdgt)
+        for k in to_procure.keys():
+            best_result[k] = best_result.get(k, 0) + MIN_COUNT
+        best_gini_coeff = gini(list(best_result.values()))
+else:
+    while True:
+        bdgt = target_budget - sum([x * i for x in to_procure.values()])
+        if bdgt <= 0: break
 
-  result = procure(to_procure, bdgt)
-  for k in to_procure.keys():
-    result[k] = result.get(k, 0) + i
-  
-  gini_coeff = gini(list(result.values()))
+        result = procure(to_procure, bdgt)
+        for k in to_procure.keys():
+            result[k] = result.get(k, 0) + i
+        
+        gini_coeff = gini(list(result.values()))
 
-  utilization = 0
-  for k, v in result.items():
-    utilization += to_procure[k] * v
+        utilization = 0
+        for k, v in result.items():
+            utilization += to_procure[k] * v
 
-  if best_result is None \
-  or best_gini_coeff > gini_coeff:
-    best_result = result
-    best_gini_coeff = gini_coeff
-  i += 1
+        if best_result is None \
+        or best_gini_coeff > gini_coeff:
+            best_result = result
+            best_gini_coeff = gini_coeff
+        i += 1
 
 
 utilization = 0
@@ -179,7 +204,7 @@ itemList = []
 for item in to_procure:
   item_value = items_to_procure[item][0]
   item_unit = items_to_procure[item][1]
-  item_count = best_result[item]
+  item_count = best_result.get(item, 0)
   item_total_cost = item_value * item_count
 
   # unit
