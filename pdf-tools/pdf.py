@@ -6,6 +6,8 @@ import fitz
 from PyPDF2 import PdfReader, PdfWriter, PdfMerger
 from PIL import Image, ImageFile
 
+DEBUG = False
+
 # SECTION: DEFS
 
 BOOL_ALIASES = {
@@ -548,7 +550,11 @@ def doc_merge():
 def doc_flatten(): 
   print(
       "Usage:\n\n"
-      "  python pdf.py flatten <path>\n"
+      "  python pdf.py flatten <path>\n",
+      "\n",
+      "Flatten a PDF by rasterizing each page.",
+      "Saves alongside original as *_flattened.pdf",
+      "Returns output path."
   )
 
 FUNCTIONS = {
@@ -574,8 +580,6 @@ def mainHelp():
   for f in FUNCTIONS.keys():
     print(f"  {f}")
   print()
-
-DEBUG = False
 
 if __name__ == "__main__":
   if DEBUG:
