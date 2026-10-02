@@ -5,16 +5,20 @@ COPYPASTA = True
 MAXIMIZE = False
 MIN_COUNT = 1
 
-def frobenius(numbers: list[int]) -> int | float:
+DEBUG_GINI = False
+PRINT_GINI = False
+
+def frobenius(prices: list[int]) -> int | float:
     """
-    Calculates the Frobenius number for a list of positive integers.
+    Calculates the the maximum budget that cannot be 100% utilized
+    given the list of prices.
     
     Returns:
-        int: The largest integer that cannot be formed as a non-negative 
-             linear combination of the given numbers.
-        float('inf'): If gcd of the set is > 1 (infinitely many numbers cannot be formed).
-        -1: If 1 is in the set (all non-negative integers can be formed).
+        int: The maximum budget that cannot be fully utilized given the prices.
+        float('inf'): If gcd of the set is > 1 (No maximum underutilized budget).
+        -1: If 1 is in the set. What the fuck are we procuring, candy?
     """
+    numbers = prices
     # Remove non-positive integers and duplicate elements
     nums = sorted(set(x for x in numbers if x > 0))
     if not nums:
@@ -94,7 +98,14 @@ def procure(items: dict, budget: int) -> dict:
     return result
 
 
-def gini(values):
+def gini(item_counts):
+    """
+    Given a list of item counts, returns a decimal number between 0 and 1 (inclusive)
+    that describes how evenly distributed the counts are. The more evenly distributed the numbers are,
+    the closer the value is to 0.
+    """
+    values = item_counts
+    # print(f"[DEBUG] Calculating gini coefficient of {values}")
     values = sorted(values)
     n = len(values)
 
@@ -118,9 +129,12 @@ plurals = {
 target_budget = 0
 budget_offset = 0
 items_to_procure = {}
+determined_procurements = {}
+excluded_items = []
+filler_item = ""
 
 def obj_5020301001():
-    global target_budget, budget_offset, items_to_procure
+    global target_budget, budget_offset, items_to_procure, filler_item, determined_procurements, excluded_items
     target_budget = 29125
     """
     - Sign Pen (Fine Tip, Black): 25.00 x 88 pens = 2,200.00
@@ -128,71 +142,133 @@ def obj_5020301001():
     - Markers (Black, Permanent): 16.00 x 88 markers = 1,408.00
     """
     items_to_procure = {
-    # "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": (400, "ream"),  # 3 reams
-    # "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": (2500, "box"),  # 3 boxes
-    # "Copy Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (300, "ream"),  # 5 reams
-    # "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (350, "ream"),  # 6 reams
-    # "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": (1200, "set"),
-    # "Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) )": (1225, "set"),
+        # Certificate Paper
+        "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": (400, "ream"),  # 3 reams
+        "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": (2500, "box"),  # 3 boxes
+        
+        # Certificate holder
+        "Copy Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (300, "ream"),  # 5 reams
+        "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (350, "ream"),  # 6 reams
     
-    # "Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box)": (25, "pen"),  # PER PIECE
-    # "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),  # PER PIECE
-    # "Markers (Black, Permanent, 12 pcs./box)": (16, "marker"),  # PER PIECE
+        # Printer Ink
+        "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": (1200, "set"),  # OLD
+        "Ink Printer set (HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow))": (1225, "set"),
+        
+        "Printer Ink (Epson 664, Black, 70mL, 4 btl./bundle)": (640, "bundle"),
+        "Printer Ink (Epson 664, Cyan, 70mL, 4 btl./bundle)": (640, "bundle"),
+        "Printer Ink (Epson 664, Magenta, 70mL, 4 btl./bundle)": (640, "bundle"),
+        "Printer Ink (Epson 664, Yellow, 70mL, 4 btl./bundle)": (640, "bundle"),
+        
+        "Printer Ink (Epson 664, Black, 70mL)": (236, "bottle"),
+        "Printer Ink (Epson 664, Cyan, 70mL)": (246, "bottle"),
+        "Printer Ink (Epson 664, Magenta, 70mL)": (246, "bottle"),
+        "Printer Ink (Epson 664, Yellow, 70mL)": (246, "bottle"),
     
-    # "Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box)": (259, "box"),
-    # "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),
-    # "Markers (Black, Permanent, 12 pcs./box)": (50, "box"),
+        # Markers
+        "Markers (Black, Permanent)": (16, "marker"),  # PER PIECE
+        "Markers (Black, Permanent, 12 pcs./box)": (50, "box"),  # OLD
+        "Markers (Black, 12 pcs./box)": (50, "box"),
+        "Markers (Red, 12 pcs./box)": (50, "box"),
+        "Markers (Blue, 12 pcs./box)": (50, "box"),
+        
+        # Pens
+        "Sign Pen (Dong-A MyGel, 0.5mm, Black)": (25, "pen"),  # PER PIECE
+        "Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box)": (259, "box"),
+        
+        # Folders
+        "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),
+        "Folder (Letter Size (9\" x 12\"), with tab)": (10, "folder"),
     
-    # "Clip (50mm, Backfold, 12 pieces per box)": (63, "box"),
-    # "Paper Clip (50mm, Vinyl/Plastic Coated, Jumbo, 100 pieces per box)": (17, "box"),
+        # Clips
+        "Clip (50mm, Backfold, 12 pieces per box)": (63, "box"),
+        "Paper Clip (50mm, Vinyl/Plastic Coated, Jumbo, 100 pieces per box)": (17, "box"),
     }
 
-    print("- Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream): 400.00 X 3 reams = 1,200.00")
-    budget_offset += 1200
+    determined_procurements = {
+        "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": 3,
+        "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": 3,
+        "Copy Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": 5,
+        "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": 6,
+        "Ink Printer set (HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow))": 5,
+        "Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box)": 5,
+        "Folder (Folio Size (9\" x 14\"), with tab)": 35,
+        "Folder (Letter Size (9\" x 12\"), with tab)": 35,
+        "Markers (Black, 12 pcs./box)": 5,
+        "Markers (Red, 12 pcs./box)": 5,
+        "Markers (Blue, 12 pcs./box)": 5,
+        
+        # Excluded
+        "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": 5,
+    }
 
-    print("- Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box): 2,500.00 X 3 boxes = 7,500.00")
-    budget_offset += 7500
+    excluded_items = [
+        "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)",
 
-    print("- Bond Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 300.00 X 5 reams = 1,500.00")
-    budget_offset += 1500
+        "Printer Ink (Epson 664, Black, 70mL, 4 btl./bundle)",
+        "Printer Ink (Epson 664, Cyan, 70mL, 4 btl./bundle)",
+        "Printer Ink (Epson 664, Magenta, 70mL, 4 btl./bundle)",
+        "Printer Ink (Epson 664, Yellow, 70mL, 4 btl./bundle)",
+        
+        "Sign Pen (Dong-A MyGel, 0.5mm, Black)",
 
-    print("- Bond Paper (Legal Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 350.00 X 6 reams = 2,100.00")
-    budget_offset += 2100
+        "Markers (Black, Permanent)",
+        "Markers (Black, Permanent, 12 pcs./box)",
 
-    print("- Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill): 1,200.00 x 5 set = 6,000.00")
-    budget_offset += 6000
-
-    print("- Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) ): 1,225.00 x 5 set = 6,125.00")
-    budget_offset += 6125
+        "Clip (50mm, Backfold, 12 pieces per box)",
+        "Paper Clip (50mm, Vinyl/Plastic Coated, Jumbo, 100 pieces per box)",
+    ]
     
-    print("- Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box): 259.00 x 5 boxes = 1295.00")
-    budget_offset += 1295
-
-    print("- Folder (Folio Size (9\" x 14\"), with tab): 12.00 x 35 folders = 420.00")
-    budget_offset += 420
-    
-    print("- Markers (Black, Permanent, 12 pcs./box): 50.00 x 5 boxes = 250.00")
-    budget_offset += 250
+    filler_item = "Printer Ink (Epson 664, Black, 70mL)"
 
 
-def obj_5021199000():
-    global target_budget, budget_offset, items_to_procure
+def obj_5021199000(): 
+    global target_budget, budget_offset, items_to_procure, filler_item, determined_procurements, excluded_items
     target_budget = 6200
     items_to_procure = {
-        # "Presentation Clicker (Wireless, with Laser)": (400, "clicker"),
+        "Presentation Clicker (Wireless, with Laser)": (400, "clicker"),
         "HDMI (Wireless)": (2750, "set"),
-        "Flash Drive (64GB Capacity)": (156, "drive"),  # philgeps item code 43202010-FD-U04
+        "Flash Drive (64GB Capacity)": (175, "drive"),  # philgeps item code 43202010-FD-U04
     }
-    print("- Presentation Clicker (Wireless, with Laser): 400.00 x 6 clickers = 2,400.00")
-    budget_offset += 2400
+    determined_procurements = {
+        "Presentation Clicker (Wireless, with Laser)": 6
+    }
 
-obj_5020301001()
+obj_5021199000()
+
+
+for item in excluded_items:
+    del items_to_procure[item]
+    if item in determined_procurements:
+        del determined_procurements[item]
+
+determined_utilization = 0
+determined_itemlist = []
+for item, item_count in determined_procurements.items():
+    # do not handle keyerror
+    item_value = items_to_procure.get(item, [0, "unit"])[0]
+    item_unit = items_to_procure[item][1]
+    item_total_cost = item_value * item_count
+
+    # unit
+    item_unit_plural = plurals.get(item_unit, item_unit + 's')
+    
+    item_print_name = item
+    if not COPYPASTA:
+        item_print_name = item[:item.find("(")]
+
+    determined_itemlist += [(f"{item_print_name}: {item_value:,.2f} x {item_count} {item_unit_plural if item_count > 1 else item_unit}", f"{item_total_cost:,.2f}")]
+    determined_utilization += item_total_cost
+
+    budget_offset += item_total_cost
+
+    del items_to_procure[item]
 
 target_budget -= budget_offset
 
 i = 0
 best_result = None
 best_gini_coeff = 1
+
 
 to_procure = {k: v[0] for k, v in items_to_procure.items()}
 
@@ -231,7 +307,7 @@ else:
 
 
 utilization = 0
-itemList = []
+itemList = [] + determined_itemlist
 for item in to_procure:
   item_value = items_to_procure[item][0]
   item_unit = items_to_procure[item][1]
@@ -258,6 +334,23 @@ for x in itemList:
   else:
     print(f"{' '*(maxItemStrlen - len(x[0]))}{x[0]} = {x[1]}")
 
+unallocated_budget = target_budget-utilization
 print(f"\nTotal: {utilization+budget_offset:,.2f}/{target_budget+budget_offset:,.2f}")
 print(f"Gini Coefficient: {best_gini_coeff}")
-print(f"Unallocated: {target_budget-utilization:,.2f}")
+print(f"Unallocated: {unallocated_budget:,.2f}")
+
+
+if filler_item != "":
+
+    print()
+
+    filler_item_price = items_to_procure.get(filler_item, [0, "unit"])[0]
+    filler_item_count = best_result.get(filler_item, 0)
+    filler_item_total = filler_item_count * filler_item_price
+    print(f"{filler_item}: {filler_item_count} x {filler_item_price:,.2f} = {filler_item_total:,.2f}")
+
+    filler_item_total_target = filler_item_total + unallocated_budget
+    print(f"{len(filler_item) * ' '}: {filler_item_total:,.2f} + {unallocated_budget:,.2f} = {filler_item_total_target:,.2f}")
+
+    filler_item_target_price = filler_item_total_target / filler_item_count
+    print(f"{len(filler_item) * ' '}: {filler_item_target_price} x {filler_item_count} = {filler_item_target_price * filler_item_count}")
