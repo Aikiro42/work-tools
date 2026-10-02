@@ -2,7 +2,7 @@ import math
 import heapq
 
 COPYPASTA = True
-MAXIMIZE = True
+MAXIMIZE = False
 MIN_COUNT = 1
 
 def frobenius(numbers: list[int]) -> int | float:
@@ -116,11 +116,17 @@ plurals = {
 }
 
 target_budget = 0
+budget_offset = 0
 items_to_procure = {}
 
-def pap_5020301001():
-    global target_budget, items_to_procure
+def obj_5020301001():
+    global target_budget, budget_offset, items_to_procure
     target_budget = 29125
+    """
+    - Sign Pen (Fine Tip, Black): 25.00 x 88 pens = 2,200.00
+    - Folder (Folio Size (9" x 14"), with tab): 12.00 x 91 folders = 1,092.00
+    - Markers (Black, Permanent): 16.00 x 88 markers = 1,408.00
+    """
     items_to_procure = {
     # "Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream)": (400, "ream"),  # 3 reams
     # "Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box)": (2500, "box"),  # 3 boxes
@@ -128,41 +134,61 @@ def pap_5020301001():
     # "Copy Paper (Folio Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream)": (350, "ream"),  # 6 reams
     # "Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill)": (1200, "set"),
     # "Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) )": (1225, "set"),
-    "Sign Pen (Fine Tip, Black)": (25, "pen"),
-    "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),
-    "Markers (Black, Permanent)": (16, "marker"),
+    
+    # "Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box)": (25, "pen"),  # PER PIECE
+    # "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),  # PER PIECE
+    # "Markers (Black, Permanent, 12 pcs./box)": (16, "marker"),  # PER PIECE
+    
+    # "Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box)": (259, "box"),
+    # "Folder (Folio Size (9\" x 14\"), with tab)": (12, "folder"),
+    # "Markers (Black, Permanent, 12 pcs./box)": (50, "box"),
+    
     # "Clip (50mm, Backfold, 12 pieces per box)": (63, "box"),
     # "Paper Clip (50mm, Vinyl/Plastic Coated, Jumbo, 100 pieces per box)": (17, "box"),
     }
 
     print("- Certificate Paper (A4 Size (210 mm × 297 mm), 200 GSM, White, Matte Finish, 100 sheets/ream): 400.00 X 3 reams = 1,200.00")
-    target_budget -= 1200
+    budget_offset += 1200
 
     print("- Certificate Holder (A4 Size, compatible with A4 certificates (210 mm × 297 mm), 50 pcs./box): 2,500.00 X 3 boxes = 7,500.00")
-    target_budget -= 7500
+    budget_offset += 7500
 
     print("- Bond Paper (A4 Size (210 mm × 297 mm), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 300.00 X 5 reams = 1,500.00")
-    target_budget -= 1500
+    budget_offset += 1500
 
     print("- Bond Paper (Legal Size (8.5\" × 13\"), 80 GSM, White, Multipurpose Copy Paper, 500 sheets per ream): 350.00 X 6 reams = 2,100.00")
-    target_budget -= 2100
+    budget_offset += 2100
 
     print("- Ink Printer set (003 Genuine Ink Bottle, (Black, Cyan, Magenta, Yellow), Dye-Based, Original EcoTank Refill): 1,200.00 x 5 set = 6,000.00")
-    target_budget -= 6000
+    budget_offset += 6000
 
     print("- Ink Printer set ( HP 32XL black bottles, HP 31 color bottle (Cyan, Magenta, Yellow) ): 1,225.00 x 5 set = 6,125.00")
-    target_budget -= 6125
+    budget_offset += 6125
+    
+    print("- Sign Pen (Dong-A MyGel, 0.5mm, Black, 12 pcs./box): 259.00 x 5 boxes = 1295.00")
+    budget_offset += 1295
+
+    print("- Folder (Folio Size (9\" x 14\"), with tab): 12.00 x 35 folders = 420.00")
+    budget_offset += 420
+    
+    print("- Markers (Black, Permanent, 12 pcs./box): 50.00 x 5 boxes = 250.00")
+    budget_offset += 250
 
 
 def obj_5021199000():
-    global target_budget, items_to_procure
+    global target_budget, budget_offset, items_to_procure
     target_budget = 6200
     items_to_procure = {
-    "Presentation Clicker (Wireless, with Laser)": (400, "clicker"),
-    "HDMI (Wireless)": (2750, "set"),
+        # "Presentation Clicker (Wireless, with Laser)": (400, "clicker"),
+        "HDMI (Wireless)": (2750, "set"),
+        "Flash Drive (64GB Capacity)": (156, "drive"),  # philgeps item code 43202010-FD-U04
     }
+    print("- Presentation Clicker (Wireless, with Laser): 400.00 x 6 clickers = 2,400.00")
+    budget_offset += 2400
 
-obj_5021199000()
+obj_5020301001()
+
+target_budget -= budget_offset
 
 i = 0
 best_result = None
@@ -186,7 +212,9 @@ else:
         for k in to_procure.keys():
             result[k] = result.get(k, 0) + i
         
-        gini_coeff = gini(list(result.values()))
+        gini_coeff = 0
+        if len(result) > 0:
+            gini_coeff = gini(list(result.values()))
 
         utilization = 0
         for k, v in result.items():
@@ -196,6 +224,9 @@ else:
         or best_gini_coeff > gini_coeff:
             best_result = result
             best_gini_coeff = gini_coeff
+        
+        if len(result) <= 0:
+            break
         i += 1
 
 
@@ -217,7 +248,9 @@ for item in to_procure:
   itemList += [(f"{item_print_name}: {item_value:,.2f} x {item_count} {item_unit_plural if item_count > 1 else item_unit}", f"{item_total_cost:,.2f}")]
   utilization += item_total_cost
 
-maxItemStrlen = max(len(x[0]) for x in itemList)
+maxItemStrlen = 0
+if len(itemList) > 0:
+    maxItemStrlen = max(len(x[0]) for x in itemList)
 
 for x in itemList:
   if COPYPASTA:
@@ -225,5 +258,6 @@ for x in itemList:
   else:
     print(f"{' '*(maxItemStrlen - len(x[0]))}{x[0]} = {x[1]}")
 
-print(f"\nTotal: {utilization:,.2f}/{target_budget:,.2f}")
+print(f"\nTotal: {utilization+budget_offset:,.2f}/{target_budget+budget_offset:,.2f}")
 print(f"Gini Coefficient: {best_gini_coeff}")
+print(f"Unallocated: {target_budget-utilization:,.2f}")
