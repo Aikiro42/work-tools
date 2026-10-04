@@ -132,9 +132,11 @@ items_to_procure = {}
 determined_procurements = {}
 excluded_items = []
 filler_item = ""
+filler_items = []
+missing_decimal = 0
 
 def obj_5020301001():
-    global target_budget, budget_offset, items_to_procure, filler_item, determined_procurements, excluded_items
+    global target_budget, budget_offset, items_to_procure, filler_item, filler_items, determined_procurements, excluded_items, missing_decimal
     target_budget = 29125
     """
     - Sign Pen (Fine Tip, Black): 25.00 x 88 pens = 2,200.00
@@ -222,7 +224,7 @@ def obj_5020301001():
 
 
 def obj_5021199000(): 
-    global target_budget, budget_offset, items_to_procure, filler_item, determined_procurements, excluded_items
+    global target_budget, budget_offset, items_to_procure, filler_item, filler_items, determined_procurements, excluded_items, missing_decimal
     target_budget = 6200
     items_to_procure = {
         "Presentation Clicker (Wireless, with Laser)": (400, "clicker"),
@@ -233,8 +235,39 @@ def obj_5021199000():
         "Presentation Clicker (Wireless, with Laser)": 6
     }
 
-obj_5021199000()
 
+def obj_5020321003(): 
+    global target_budget, budget_offset, items_to_procure, filler_item, filler_items, determined_procurements, excluded_items, missing_decimal
+    target_budget = 237323
+    missing_decimal = 0.72
+    items_to_procure = {
+        "dslr": (49998, "set"),
+        "monitor": (6500, "unit"),
+        "macbook": (49999, "unit"),
+        "hdd": (9500, "unit"),
+        "ssd": (5000, "unit"),
+    }
+    determined_procurements = {
+        "hdd": 8,  # 1 per team member
+        "ssd": 5,  # 1 per province
+        "monitor": 5,  # 1 per province excl. Quirino
+    }
+    filler_items = ["dslr", "macbook"]
+    print("HDD: 1 unit per team member incl. focals")
+    print("SSD: 1 unit per province")
+    print("Monitor: 1 unit per province (Quirino's unit is for the person to replace me pagkalipat ko)")
+    print("DSLR: dynamic qty")
+    print("Macbook: dynamic qty")
+    print("-------------------------")
+
+obj_5020321003()
+
+if filler_item != "" and (filler_item not in filler_items): 
+    filler_items += [filler_item]
+
+filler_item_infos = {}
+for item in filler_items:
+    filler_item_infos[item] = items_to_procure.get(item, (0, "unit"))
 
 for item in excluded_items:
     del items_to_procure[item]
@@ -334,23 +367,30 @@ for x in itemList:
   else:
     print(f"{' '*(maxItemStrlen - len(x[0]))}{x[0]} = {x[1]}")
 
-unallocated_budget = target_budget-utilization
+unallocated_budget = target_budget - utilization + missing_decimal
 print(f"\nTotal: {utilization+budget_offset:,.2f}/{target_budget+budget_offset:,.2f}")
 print(f"Gini Coefficient: {best_gini_coeff}")
 print(f"Unallocated: {unallocated_budget:,.2f}")
 
 
-if filler_item != "":
+if len(filler_items) > 0:
 
-    print()
+    # divide unallocated budget among items
+    unallocated_per_item = unallocated_budget / len(filler_items)
+    print(f"\nAdjust budget per item: {unallocated_per_item:,.2f}")
+    for filler_item in filler_items:
 
-    filler_item_price = items_to_procure.get(filler_item, [0, "unit"])[0]
-    filler_item_count = best_result.get(filler_item, 0)
-    filler_item_total = filler_item_count * filler_item_price
-    print(f"{filler_item}: {filler_item_count} x {filler_item_price:,.2f} = {filler_item_total:,.2f}")
+        print(f"\nPrice Adjustment for {filler_item}:")
+        filler_item_info = filler_item_infos.get(filler_item, (0, "unit"))
+        filler_item_price = filler_item_info[0]
+        filler_item_count = best_result.get(filler_item, 0)
 
-    filler_item_total_target = filler_item_total + unallocated_budget
-    print(f"{len(filler_item) * ' '}: {filler_item_total:,.2f} + {unallocated_budget:,.2f} = {filler_item_total_target:,.2f}")
+        if filler_item_price > 0 and filler_item_count > 0:
+            filler_item_total = filler_item_count * filler_item_price
+            print(f"{filler_item}: {filler_item_count} x {filler_item_price:,.2f} = {filler_item_total:,.2f}")
 
-    filler_item_target_price = filler_item_total_target / filler_item_count
-    print(f"{len(filler_item) * ' '}: {filler_item_target_price} x {filler_item_count} = {filler_item_target_price * filler_item_count}")
+            filler_item_total_target = filler_item_total + unallocated_per_item
+            print(f"{len(filler_item) * ' '}: {filler_item_total:,.2f} + {unallocated_per_item:,.2f} = {filler_item_total_target:,.2f}")
+
+            filler_item_target_price = filler_item_total_target / filler_item_count
+            print(f"{len(filler_item) * ' '}: {filler_item_target_price:,.2f} x {filler_item_count} = {filler_item_target_price * filler_item_count:,.2f}")
