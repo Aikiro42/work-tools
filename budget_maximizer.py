@@ -244,15 +244,15 @@ def obj_5020321003():
         "dslr": (49998, "set"),
         "monitor": (6500, "unit"),
         "macbook": (49999, "unit"),
-        "hdd": (9500, "unit"),
-        "ssd": (5000, "unit"),
+        "hdd": (5000, "unit"),
+        "ssd": (9500, "unit"),
     }
     determined_procurements = {
         "hdd": 8,  # 1 per team member
         "ssd": 5,  # 1 per province
         "monitor": 5,  # 1 per province excl. Quirino
     }
-    filler_items = ["dslr", "macbook"]
+    filler_items = ["dslr", "macbook", "ssd"]
     print("HDD: 1 unit per team member incl. focals")
     print("SSD: 1 unit per province")
     print("Monitor: 1 unit per province (Quirino's unit is for the person to replace me pagkalipat ko)")
@@ -368,7 +368,7 @@ for x in itemList:
     print(f"{' '*(maxItemStrlen - len(x[0]))}{x[0]} = {x[1]}")
 
 unallocated_budget = target_budget - utilization + missing_decimal
-print(f"\nTotal: {utilization+budget_offset:,.2f}/{target_budget+budget_offset:,.2f}")
+print(f"\nTotal: {utilization+budget_offset:,.2f}/{target_budget+budget_offset+missing_decimal:,.2f}")
 print(f"Gini Coefficient: {best_gini_coeff}")
 print(f"Unallocated: {unallocated_budget:,.2f}")
 
@@ -383,7 +383,8 @@ if len(filler_items) > 0:
         print(f"\nPrice Adjustment for {filler_item}:")
         filler_item_info = filler_item_infos.get(filler_item, (0, "unit"))
         filler_item_price = filler_item_info[0]
-        filler_item_count = best_result.get(filler_item, 0)
+        filler_item_unit = filler_item_info[1]
+        filler_item_count = best_result.get(filler_item, determined_procurements.get(filler_item, 0))
 
         if filler_item_price > 0 and filler_item_count > 0:
             filler_item_total = filler_item_count * filler_item_price
@@ -393,4 +394,8 @@ if len(filler_items) > 0:
             print(f"{len(filler_item) * ' '}: {filler_item_total:,.2f} + {unallocated_per_item:,.2f} = {filler_item_total_target:,.2f}")
 
             filler_item_target_price = filler_item_total_target / filler_item_count
-            print(f"{len(filler_item) * ' '}: {filler_item_target_price:,.2f} x {filler_item_count} = {filler_item_target_price * filler_item_count:,.2f}")
+            print(f"{len(filler_item) * ' '}: (Accurate per-unit price): {filler_item_target_price}")
+            print(f"{len(filler_item) * ' '}: (Accurate subtotal price): {filler_item_target_price * filler_item_count}")
+            print(f"{len(filler_item) * ' '}: {filler_item_target_price * filler_item_count:,.2f} ÷ {filler_item_count} = {filler_item_target_price:,.2f}/{filler_item_unit}")
+        else:
+            print("Error")
